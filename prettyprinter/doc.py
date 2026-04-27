@@ -60,14 +60,12 @@ def align(doc):
     validate_doc(doc)
 
     def evaluator(indent, column, page_width, ribbon_width):
-        return Nest(column - indent, doc)
+        pass
     return contextual(evaluator)
 
 
 def hang(i, doc):
-    return align(
-        Nest(i, validate_doc(doc))
-    )
+    pass
 
 
 def nest(i, doc):

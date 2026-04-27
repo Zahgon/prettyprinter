@@ -302,19 +302,10 @@ class PrettyContext:
         """
         Return a modified PrettyContext with ``key`` set to ``value``
         """
-        return self._replace(user_ctx={
-            **self.user_ctx,
-            key: value,
-        })
+        pass
 
     def set(self, key, value):
-        warnings.warn(
-            "PrettyContext.set will be deprecated in the future in favor of "
-            "renamed PrettyPrinter.assoc. You can fix this warning by "
-            "changing .set method calls to .assoc",
-            PendingDeprecationWarning
-        )
-        return self.assoc(key, value)
+        pass
 
     def get(self, key, default=None):
         return self.user_ctx.get(key, default)
@@ -323,89 +314,21 @@ class PrettyContext:
         return self._replace(depth_left=self.depth_left - 1)
 
     def start_visit(self, value):
-        self.visited.add(id(value))
+        pass
 
     def end_visit(self, value):
-        self.visited.remove(id(value))
+        pass
 
     def is_visited(self, value):
-        return id(value) in self.visited
+        pass
 
 
 def _warn_about_bad_printer(pretty_fn, value, exc):
-    fnname = '{}.{}'.format(
-        pretty_fn.__module__,
-        pretty_fn.__qualname__
-    )
-    warnings.warn(
-        "The pretty printer for {}, {}, raised an exception. "
-        "Falling back to default repr.\n\n{}".format(
-            type(value).__name__,
-            fnname,
-            ''.join(format_exception(type(exc), exc, exc.__traceback__))
-        ),
-        UserWarning
-    )
+    pass
 
 
 def _run_pretty(pretty_fn, value, ctx, trailing_comment=None):
-    if ctx.is_visited(value):
-        return _pretty_recursion(value)
-
-    ctx.start_visit(value)
-
-    if trailing_comment:
-        try:
-            doc = pretty_fn(
-                value,
-                ctx,
-                trailing_comment=trailing_comment
-            )
-        except TypeError as e:
-            # This is probably because pretty_fn does not support
-            # trailing_comment, but let's make sure.
-            sig = inspect.signature(pretty_fn)
-            try:
-                sig.bind(value, ctx, trailing_comment=trailing_comment)
-            except TypeError:
-                fnname = '{}.{}'.format(
-                    pretty_fn.__module__,
-                    pretty_fn.__qualname__
-                )
-                warnings.warn(
-                    "The pretty printer for {}, {}, does not support rendering "
-                    "trailing comments. It will not show up in output.".format(
-                        type(value).__name__, fnname
-                    )
-                )
-                doc = pretty_fn(value, ctx)
-            else:
-                _warn_about_bad_printer(pretty_fn, value, exc=e)
-                doc = repr(value)
-    else:
-        try:
-            doc = pretty_fn(value, ctx)
-        except Exception as e:
-            _warn_about_bad_printer(pretty_fn, value, exc=e)
-            doc = repr(value)
-
-    if not (
-        isinstance(doc, str) or
-        isinstance(doc, Doc)
-    ):
-        fnname = '{}.{}'.format(
-            pretty_fn.__module__,
-            pretty_fn.__qualname__
-        )
-        raise ValueError(
-            'Functions decorated with register_pretty must return '
-            'an instance of str or Doc. {} returned '
-            '{} instead.'.format(fnname, repr(doc))
-        )
-
-    ctx.end_visit(value)
-
-    return doc
+    pass
 
 
 _DEFERRED_DISPATCH_BY_NAME = {}
@@ -419,10 +342,7 @@ _PREDICATE_REGISTRY = []
 
 
 def _repr_pretty(value, ctx):
-    for predicate, fn in _PREDICATE_REGISTRY:
-        if predicate(value):
-            return fn(value, ctx)
-    return repr(value)
+    pass
 
 
 _BASE_DISPATCH = partial(_run_pretty, _repr_pretty)
@@ -513,38 +433,7 @@ def register_pretty(type=None, predicate=None):
             )
 
     def decorator(fn):
-        sig = inspect.signature(fn)
-
-        value = None
-        ctx = None
-
-        try:
-            sig.bind(value, ctx)
-        except TypeError:
-            fnname = '{}.{}'.format(
-                fn.__module__,
-                fn.__qualname__
-            )
-            raise ValueError(
-                "Functions decorated with register_pretty must accept "
-                "exactly two positional parameters: 'value' and 'ctx'. "
-                "The function signature for {} was not compatible.".format(
-                    fnname
-                )
-            )
-
-        if type:
-            if isinstance(type, str):
-                # We don't wrap this with _run_pretty,
-                # so that when we register this printer with an actual
-                # class, we can call register_pretty(cls)(fn)
-                _DEFERRED_DISPATCH_BY_NAME[type] = fn
-            else:
-                pretty_dispatch.register(type, partial(_run_pretty, fn))
-        else:
-            assert callable(predicate)
-            _PREDICATE_REGISTRY.append((predicate, fn))
-        return fn
+        pass
     return decorator
 
 
@@ -592,12 +481,7 @@ def is_registered(
 
 
 def bracket(ctx, left, child, right):
-    return concat([
-        left,
-        nest(ctx.indent, concat([SOFTLINE, child])),
-        SOFTLINE,
-        right
-    ])
+    pass
 
 
 def commentdoc(text):
@@ -659,74 +543,7 @@ def commentdoc(text):
 
 
 def sequence_of_docs(ctx, left, docs, right, dangle=False, force_break=False):
-    docs = list(docs)
-
-    # Performance optimization:
-    # in case of really long sequences,
-    # the layout algorithm can be quite slow.
-    # No branching here is needed if the sequence
-    # is long enough that even with the shortest
-    # element output, it does not fit the ribbon width.
-    minimum_output_len = (
-        2 +  # Assume left and right are one character each
-        len(', ') * (len(docs) - 1) +
-        len(docs)  # each element must take at least one character
-    )
-
-    MAX_PRACTICAL_RIBBON_WIDTH = 150
-
-    will_break = force_break or minimum_output_len > MAX_PRACTICAL_RIBBON_WIDTH
-
-    has_comment = any(is_commented(doc) for doc in docs)
-    parts = []
-    for idx, doc in enumerate(docs):
-        last = idx == len(docs) - 1
-
-        if is_commented(doc):
-            comment_str = doc.annotation.value
-            # Try to fit the comment at the end of the same line.
-            flat_version = concat([
-                doc,
-                COMMA if not last else NIL,
-                '  ',
-                commentdoc(comment_str),
-                HARDLINE if not last else NIL
-            ])
-
-            # If the value is broken to multiple lines, add
-            # comment on the line above.
-            broken_version = concat([
-                commentdoc(comment_str),
-                HARDLINE,
-                doc,
-                COMMA if not last else NIL,
-                HARDLINE if not last else NIL
-            ])
-            parts.append(
-                group(
-                    flat_choice(
-                        when_flat=flat_version,
-                        when_broken=broken_version,
-                    )
-                )
-            )
-        else:
-            parts.append(doc)
-            if not last:
-                parts.append(
-                    concat([COMMA, LINE])
-                )
-
-    if dangle:
-        parts.append(COMMA)
-
-    outer = (
-        always_break
-        if will_break or has_comment
-        else group
-    )
-
-    return outer(bracket(ctx, left, concat(parts), right))
+    pass
 
 
 def pretty_call(ctx, fn, *args, **kwargs):
@@ -1009,59 +826,17 @@ def build_fncall(
 
 @register_pretty(type)
 def pretty_type(_type, ctx):
-    if _type is type(None):  # noqa
-        # NoneType is not available in the global namespace,
-        # clearer to print type(None)
-        return pretty_call_alt(ctx, type, args=(None, ))
-
-    result = general_identifier(_type)
-
-    # For native types, we can print the class identifier, e.g.
-    # >>> int
-    # int
-    #
-    # But for others, such as:
-    # >>> import functools; functools.partial
-    # functools.partial
-    #
-    # It may be unclear what kind of value it is, unless the user already
-    # knows it's a class. The default repr from Python is
-    # <class 'functools.partial'>, so we'll imitate that by adding
-    # a comment indicating that the value is a class.
-    module = _type.__module__
-    if module in IMPLICIT_MODULES:
-        return result
-
-    return comment(
-        result,
-        'class'
-    )
+    pass
 
 
 @register_pretty(FunctionType)
 def pretty_function(fn, ctx):
-    return comment(
-        general_identifier(fn),
-        'function'
-    )
+    pass
 
 
 @register_pretty(BuiltinFunctionType)  # Also includes bound methods.
 def pretty_builtin_function(fn, ctx):
-    try:
-        cls_inst = fn.__self__
-    except Exception:
-        is_method = False
-    else:
-        # Apparently built-in functions like sorted have the builtin Module
-        # returned from __self__.
-        is_method = not isinstance(cls_inst, ModuleType)
-
-    return comment(
-        general_identifier(fn),
-        'built-in bound method' if is_method
-        else 'built-in function'
-    )
+    pass
 
 
 namedtuple_clsattrs = (
@@ -1079,35 +854,15 @@ c_namedtuple_identify_by_clsattrs = (
 
 
 def _is_namedtuple(value):
-    cls = type(value)
-
-    for attrname in namedtuple_clsattrs:
-        try:
-            getattr(cls, attrname)
-        except AttributeError:
-            return False
-
-    return True
+    pass
 
 
 def _is_cnamedtuple(value):
-    cls = type(value)
-    for attrname in c_namedtuple_identify_by_clsattrs:
-        try:
-            val = getattr(cls, attrname)
-        except AttributeError:
-            return False
-        else:
-            if not isinstance(val, int):
-                return False
-
-    return True
+    pass
 
 
 def pretty_namedtuple(value, ctx, trailing_comment=None):
-    constructor = type(value)
-    kwargs = zip(constructor._fields, value)
-    return pretty_call_alt(ctx, constructor, kwargs=kwargs)
+    pass
 
 
 # Given a cnamedtuple value, returns a tuple
@@ -1140,164 +895,24 @@ _cnamedtuple_fieldnames_by_class = WeakKeyDictionary()
 # - return value of time.strptime()
 # - return value of os.uname()
 def pretty_cnamedtuple(value, ctx, trailing_comment=None):
-    cls = type(value)
-    if cls not in _cnamedtuple_fieldnames_by_class:
-        try:
-            fieldnames = resolve_cnamedtuple_fieldnames(value)
-        except Exception as exc:
-            fieldnames = exc
-        _cnamedtuple_fieldnames_by_class[cls] = fieldnames
-
-    fieldnames = _cnamedtuple_fieldnames_by_class[cls]
-    if isinstance(fieldnames, Exception):
-        raise fieldnames
-
-    return pretty_call_alt(
-        ctx,
-        cls,
-        args=tuple([
-            tuple(
-                comment(val, fieldname)
-                for val, fieldname in zip(value, fieldnames)
-            )
-        ])
-    )
+    pass
 
 
 @register_pretty(SimpleNamespace)
 def pretty_simplenamespace(value, ctx, trailing_comment=None):
-    cls = type(value)
-    return pretty_call_alt(
-        ctx,
-        cls,
-        args=(),
-        kwargs=[
-            (k, value.__dict__[k])
-            for k in sorted(value.__dict__)
-        ]
-    )
+    pass
 
 
 @register_pretty(tuple)
 @register_pretty(list)
 @register_pretty(set)
 def pretty_bracketable_iterable(value, ctx, trailing_comment=None):
-    constructor = type(value)
-
-    if isinstance(value, tuple):
-        if _is_cnamedtuple(value):
-            try:
-                return pretty_cnamedtuple(
-                    value,
-                    ctx,
-                    trailing_comment=trailing_comment
-                )
-            except Exception:
-                pass  # render as a normal tuple
-        elif _is_namedtuple(value):
-            return pretty_namedtuple(value, ctx, trailing_comment=trailing_comment)
-
-    is_native_type = constructor in (tuple, list, set)
-    if len(value) > ctx.max_seq_len:
-        truncation_comment = '...and {} more elements'.format(
-            len(value) - ctx.max_seq_len
-        )
-
-        trailing_comment = (
-            truncation_comment + '. ' + trailing_comment
-            if trailing_comment
-            else truncation_comment
-        )
-
-    dangle = False
-
-    if isinstance(value, list):
-        left, right = LBRACKET, RBRACKET
-    elif isinstance(value, tuple):
-        left, right = LPAREN, RPAREN
-        if len(value) == 1:
-            dangle = True
-    elif isinstance(value, set):
-        left, right = LBRACE, RBRACE
-
-    if not value:
-        if isinstance(value, (list, tuple)):
-            if is_native_type:
-                return concat([left, right])
-            return pretty_call_alt(ctx, constructor)
-        else:
-            # E.g. set() or SubclassOfSet()
-            return pretty_call_alt(ctx, constructor)
-
-    if ctx.depth_left == 0:
-        if isinstance(value, (list, tuple)):
-            literal = concat([left, ELLIPSIS, right])
-            if is_native_type:
-                return literal
-            return build_fncall(
-                ctx,
-                general_identifier(constructor),
-                argdocs=(literal, ),
-                hug_sole_arg=True
-            )
-        else:
-            return pretty_call_alt(ctx, constructor, args=(..., ))
-
-    if len(value) == 1:
-        sole_value = list(value)[0]
-        els = [
-            pretty_python_value(
-                sole_value,
-                ctx=(
-                    ctx
-                    .nested_call()
-                    .use_multiline_strategy(MULTILINE_STRATEGY_PLAIN)
-                )
-            )
-        ]
-    else:
-        els = (
-            pretty_python_value(
-                el,
-                ctx=(
-                    ctx
-                    .nested_call()
-                    .use_multiline_strategy(MULTILINE_STRATEGY_HANG)
-                )
-            )
-            for el in take(ctx.max_seq_len, value)
-        )
-
-    if trailing_comment:
-        els = chain(els, [commentdoc(trailing_comment)])
-        dangle = False
-
-    literal = sequence_of_docs(
-        ctx,
-        left,
-        els,
-        right,
-        dangle=dangle,
-        force_break=bool(trailing_comment)
-    )
-
-    if is_native_type:
-        return literal
-
-    return build_fncall(
-        ctx,
-        general_identifier(constructor),
-        argdocs=(literal, ),
-        hug_sole_arg=True
-    )
+    pass
 
 
 @register_pretty(frozenset)
 def pretty_frozenset(value, ctx):
-    constructor = type(value)
-    if value:
-        return pretty_call_alt(ctx, constructor, args=(list(value), ))
-    return pretty_call_alt(ctx, constructor)
+    pass
 
 
 class _AlwaysSortable(object):
@@ -1307,7 +922,7 @@ class _AlwaysSortable(object):
         self.value = value
 
     def sortable_value(self):
-        return (str(type(self)), id(self))
+        pass
 
     def __lt__(self, other):
         try:
@@ -1318,189 +933,7 @@ class _AlwaysSortable(object):
 
 @register_pretty(dict)
 def pretty_dict(d, ctx, trailing_comment=None):
-    constructor = type(d)
-    is_native_type = constructor is dict
-    if ctx.depth_left == 0:
-        literal = concat([LBRACE, ELLIPSIS, RBRACE])
-
-        if is_native_type:
-            return literal
-
-        return build_fncall(
-            ctx,
-            general_identifier(constructor),
-            argdocs=(literal, ),
-            hug_sole_arg=True
-        )
-
-    if len(d) > ctx.max_seq_len:
-        count_truncated = len(d) - ctx.max_seq_len
-        truncation_comment = '...and {} more elements'.format(
-            count_truncated
-        )
-        trailing_comment = (
-            truncation_comment + '. ' + trailing_comment
-            if trailing_comment
-            else truncation_comment
-        )
-
-    has_comment = bool(trailing_comment)
-
-    sorted_keys = (
-        sorted(d.keys(), key=_AlwaysSortable)
-        if ctx.sort_dict_keys
-        else d.keys()
-    )
-
-    pairs = []
-    for k in take(ctx.max_seq_len, sorted_keys):
-        v = d[k]
-
-        if isinstance(k, (str, bytes)):
-            kdoc = pretty_str(
-                k,
-                # not a nested call on purpose
-                ctx=ctx.use_multiline_strategy(MULTILINE_STRATEGY_PARENS),
-            )
-        else:
-            kdoc = pretty_python_value(
-                k,
-                ctx=ctx.nested_call()
-            )
-
-        vdoc = pretty_python_value(
-            v,
-            ctx=(
-                ctx
-                .nested_call()
-                .use_multiline_strategy(MULTILINE_STRATEGY_INDENTED)
-            ),
-        )
-
-        kcomment = None
-        if is_commented(kdoc):
-            has_comment = True
-            kcomment = kdoc.annotation.value
-            kdoc = kdoc.doc
-
-        vcomment = None
-        if is_commented(vdoc):
-            has_comment = True
-            vcomment = vdoc.annotation.value
-            vdoc = vdoc.doc
-
-        pairs.append((k, v, kdoc, vdoc, kcomment, vcomment))
-
-    parts = []
-    for idx, tup in enumerate(pairs):
-        last = idx == len(pairs) - 1
-
-        k, v, kdoc, vdoc, kcomment, vcomment = tup
-
-        if not (kcomment or vcomment):
-            parts.append(
-                concat([
-                    kdoc,
-                    concat([COLON, ' ']),
-                    vdoc,
-                    NIL if last else COMMA,
-                    NIL if last else LINE,
-                ]),
-            )
-            continue
-
-        if kcomment:
-            kcommented = concat([
-                commentdoc(kcomment),
-                HARDLINE,
-                kdoc,
-            ])
-        else:
-            kcommented = kdoc
-
-        if vcomment:
-            vcommented = group(
-                flat_choice(
-                    # Add comment at the end of the line
-                    when_flat=concat([
-                        vdoc,
-                        NIL if last else COMMA,
-                        '  ',
-                        commentdoc(vcomment),
-                        NIL if last else HARDLINE,
-                    ]),
-
-                    # Put comment above the value
-                    # on its own line
-                    when_broken=concat([
-                        nest(
-                            ctx.indent,
-                            concat([
-                                HARDLINE,
-                                commentdoc(vcomment),
-                                HARDLINE,
-                                # Rerender vdoc with plain multiline strategy,
-                                # since we already have an indentation.
-                                pretty_python_value(
-                                    v,
-                                    ctx=(
-                                        ctx
-                                        .nested_call()
-                                        .use_multiline_strategy(MULTILINE_STRATEGY_PLAIN)
-                                    ),
-                                ),
-                                COMMA if not last else NIL,
-                            ])
-                        ),
-                        HARDLINE if not last else NIL
-                    ])
-                )
-            )
-        else:
-            vcommented = concat([
-                vdoc,
-                COMMA if not last else NIL,
-                LINE if not last else NIL
-            ])
-
-        parts.append(
-            concat([
-                kcommented,
-                concat([COLON, ' ']),
-                vcommented
-            ])
-        )
-
-    if trailing_comment:
-        parts.append(concat([
-            HARDLINE,
-            commentdoc(trailing_comment)
-        ]))
-
-    doc = bracket(
-        ctx,
-        LBRACE,
-        concat(parts),
-        RBRACE,
-    )
-
-    if len(pairs) > 2 or has_comment:
-        doc = always_break(doc)
-    else:
-        doc = group(doc)
-
-    if is_native_type:
-        return doc
-
-    if not parts:
-        return pretty_call_alt(ctx, constructor)
-
-    return build_fncall(
-        ctx,
-        general_identifier(constructor),
-        argdocs=(doc, ),
-        hug_sole_arg=True
-    )
+    pass
 
 
 INF_FLOAT = float('inf')
@@ -1543,7 +976,7 @@ def pretty_int(value, ctx):
 
 @register_pretty(type(...))
 def pretty_ellipsis(value, ctx):
-    return ELLIPSIS
+    pass
 
 
 @register_pretty(bool)
@@ -1565,7 +998,7 @@ NONE_DOC = annotate(Token.KEYWORD_CONSTANT, 'None')
 
 @register_pretty(type(None))
 def pretty_none(value, ctx):
-    return NONE_DOC
+    pass
 
 
 SINGLE_QUOTE_TEXT = "'"
@@ -1837,107 +1270,13 @@ def pretty_str(s, ctx, split_pattern=None):
     prettyprinter_indent = ctx.indent
 
     def evaluator(indent, column, page_width, ribbon_width):
-        nonlocal multiline_strategy
-
-        columns_left_in_line = page_width - column
-        columns_left_in_ribbon = indent + ribbon_width - column
-        available_width = min(columns_left_in_line, columns_left_in_ribbon)
-
-        singleline_str_chars = len(s) + len('""')
-        flat_version = pretty_single_line_str(s, prettyprinter_indent)
-
-        if singleline_str_chars <= available_width:
-            if is_native_type:
-                return flat_version
-            return build_fncall(ctx, constructor, argdocs=[flat_version])
-
-        # multiline string
-        each_line_starts_on_col = indent
-        each_line_ends_on_col = min(page_width, each_line_starts_on_col + ribbon_width)
-
-        each_line_max_str_len = max(
-            each_line_ends_on_col - each_line_starts_on_col - 2,
-            # If we're printing the string inside a highly nested data
-            # structure, we may naturally run out of available width.
-            # In these cases, we need to give some space for printing
-            # such that we don't get stuck in an infinite loop when
-            # str_to_lines is called.
-            8 + len('""')
-        )
-
-        use_quote = determine_quote_strategy(s)
-
-        lines = list(str_to_lines(
-            max_len=each_line_max_str_len,
-            use_quote=use_quote,
-            s=s,
-            pattern=split_pattern,
-        ))
-
-        if len(lines) == 1:
-            return flat_version
-
-        parts = intersperse(
-            HARDLINE,
-            (
-                pretty_single_line_str(
-                    line,
-                    indent=prettyprinter_indent,
-                    use_quote=use_quote,
-                )
-                for line in lines
-            )
-        )
-
-        if not is_native_type:
-            multiline_strategy = MULTILINE_STRATEGY_PLAIN
-
-        if multiline_strategy == MULTILINE_STRATEGY_PLAIN:
-            res = always_break(concat(parts))
-            if is_native_type:
-                return res
-            return build_fncall(ctx, constructor, argdocs=[res])
-        elif multiline_strategy == MULTILINE_STRATEGY_HANG:
-            return always_break(
-                nest(
-                    prettyprinter_indent,
-                    concat(parts)
-                )
-            )
-        else:
-            if multiline_strategy == MULTILINE_STRATEGY_PARENS:
-                left_paren, right_paren = LPAREN, RPAREN
-            else:
-                assert multiline_strategy == MULTILINE_STRATEGY_INDENTED
-                left_paren, right_paren = '', ''
-
-            return always_break(
-                concat([
-                    left_paren,
-                    nest(
-                        prettyprinter_indent,
-                        concat([
-                            HARDLINE,
-                            *parts,
-                        ])
-                    ),
-                    (
-                        HARDLINE
-                        if multiline_strategy == MULTILINE_STRATEGY_PARENS
-                        else NIL
-                    ),
-                    right_paren
-                ])
-            )
+        pass
 
     return contextual(evaluator)
 
 
 def _pretty_recursion(value):
-    return '<Recursion on {} with id={}>'.format(
-        type(value).__name__,
-        id(value)
-    )
+    pass
 
 
 def python_to_sdocs(

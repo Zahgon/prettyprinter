@@ -143,17 +143,11 @@ class FlatChoice(Doc):
 
     @property
     def when_broken(self):
-        if self.normalize_on_access and not self._broken_normalized:
-            self._when_broken = normalize_doc(self._when_broken)
-            self._broken_normalized = True
-        return self._when_broken
+        pass
 
     @property
     def when_flat(self):
-        if self._broken_normalized and not self._flat_normalized:
-            self._when_flat = normalize_doc(self._when_flat)
-            self._flat_normalized = True
-        return self._when_flat
+        pass
 
     def __repr__(self):
         return 'FlatChoice(when_broken={}, when_flat={})'.format(

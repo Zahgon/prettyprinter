@@ -19,30 +19,6 @@ def install():
         )
 
     def prettyprinter_displayhook(value):
-        if value is None:
-            return
-
-        builtins._ = None
-        stream = StringIO()
-        output = cpprint(
-            value,
-            width=get_terminal_width(default=79),
-            stream=stream,
-            end=''
-        )
-        output = stream.getvalue()
-
-        try:
-            sys.stdout.write(output)
-        except UnicodeEncodeError:
-            encoded = output.encode(sys.stdout.encoding, 'backslashreplace')
-            if hasattr(sys.stdout, 'buffer'):
-                sys.stdout.buffer.write(encoded)
-            else:
-                text = encoded.decode(sys.stdout.encoding, 'strict')
-                sys.stdout.write(text)
-
-        sys.stdout.write('\n')
-        builtins._ = value
+        pass
 
     sys.displayhook = prettyprinter_displayhook

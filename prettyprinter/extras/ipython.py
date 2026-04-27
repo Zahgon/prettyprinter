@@ -49,16 +49,7 @@ def install():
             self.stream = stream
 
         def pretty(self, obj):
-            cpprint(
-                obj,
-                stream=self.stream,
-                style=pygments_style_from_name_or_cls(
-                    ipy.highlighting_style,
-                    ishell=ipy
-                ),
-                width=columns,
-                end=None
-            )
+            pass
 
         def flush(self):
             pass

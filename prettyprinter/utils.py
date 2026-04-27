@@ -55,7 +55,7 @@ def compose(f, g):
         return f
 
     def composed(x):
-        return f(g(x))
+        pass
 
     composed.__name__ = 'composed_{}_then_{}'.format(
         g.__name__,

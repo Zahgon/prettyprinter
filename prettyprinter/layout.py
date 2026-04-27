@@ -132,80 +132,7 @@ def smart_fitting_predicate(
     Lookahead until the last doc at the current indentation level.
     Pretty, but not as fast.
     """
-    chars_left = max_width
-
-    while chars_left >= 0:
-        if not triplestack:
-            return True
-
-        indent, mode, doc = triplestack.pop()
-
-        if doc is NIL:
-            continue
-        elif isinstance(doc, str):
-            chars_left -= len(doc)
-        elif isinstance(doc, Concat):
-            # Recursive call in Strictly Pretty: docs within Concat
-            # are processed in order, with keeping the current
-            # indentation and mode.
-            # We want the leftmost element at the top of the stack,
-            # so we append the concatenated documents in reverse order.
-            triplestack.extend(
-                (indent, mode, doc)
-                for doc in reversed(doc.docs)
-            )
-        elif isinstance(doc, Annotated):
-            triplestack.append((indent, mode, doc.doc))
-        elif isinstance(doc, Fill):
-            # Same as the Concat case.
-            triplestack.extend(
-                (indent, mode, doc)
-                for doc in reversed(doc.docs)
-            )
-        elif isinstance(doc, Nest):
-            # Nest is a combination of an indent and a doc.
-            # Increase indentation, then add the doc for processing.
-            triplestack.append((indent + doc.indent, mode, doc.doc))
-        elif isinstance(doc, AlwaysBreak):
-            return False
-        elif doc is HARDLINE:
-            # In the fast algorithm, when we see a line,
-            # we return True. Here, as long as the minimum indentation
-            # level is satisfied, we continue processing the next line.
-            # This causes the longer runtime.
-            if indent > min_nesting_level:
-                chars_left = page_width - indent
-            else:
-                return True
-        elif isinstance(doc, FlatChoice):
-            if mode is FLAT_MODE:
-                triplestack.append((indent, mode, doc.when_flat))
-            elif mode is BREAK_MODE:
-                triplestack.append((indent, mode, doc.when_broken))
-            else:
-                raise ValueError
-        elif isinstance(doc, Group):
-            # Group just changes the mode.
-            triplestack.append((indent, FLAT_MODE, doc.doc))
-        elif isinstance(doc, Contextual):
-            ribbon_width = max(0, min(page_width, round(ribbon_frac * page_width)))
-
-            evaluated_doc = doc.fn(
-                indent=indent,
-                column=max_width - chars_left,
-                page_width=page_width,
-                ribbon_width=ribbon_width,
-            )
-            normalized = normalize_doc(evaluated_doc)
-            triplestack.append((indent, mode, normalized))
-        elif isinstance(doc, SAnnotationPush):
-            continue
-        elif isinstance(doc, SAnnotationPop):
-            continue
-        else:
-            raise ValueError((indent, mode, doc))
-
-    return False
+    pass
 
 
 def best_layout(
@@ -388,9 +315,4 @@ def layout_smart(doc, width=79, ribbon_frac=0.9):
 
 
 def layout_fast(doc, width=79, ribbon_frac=0.9):
-    return best_layout(
-        doc,
-        width,
-        ribbon_frac,
-        fitting_predicate=fast_fitting_predicate,
-    )
+    pass
