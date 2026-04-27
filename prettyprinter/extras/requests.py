@@ -26,8 +26,4 @@ def pretty_session(session, ctx):
 
 
 def install():
-    register_pretty('requests.structures.CaseInsensitiveDict')(pretty_headers)
-    register_pretty('requests.sessions.Session')(pretty_session)
-    register_pretty('requests.models.Response')(pretty_response)
-    register_pretty('requests.models.Request')(pretty_request)
-    register_pretty('requests.models.PreparedRequest')(pretty_prepared_request)
+    pass

@@ -20,38 +20,15 @@ class _NoStyle(Style):
 # https://github.com/ipython/ipython/blob/5b2b7dd07a268baceeeedfe919de0a59e5bc922b/IPython/terminal/interactiveshell.py#L284-L346
 # TODO: support style overrides.
 def pygments_style_from_name_or_cls(name_or_cls, ishell):
-    if name_or_cls == 'legacy':
-        legacy = ishell.colors.lower()
-        if legacy == 'linux':
-            return get_style_by_name('monokai')
-        elif legacy == 'lightbg':
-            return get_style_by_name('pastie')
-        elif legacy == 'neutral':
-            return get_style_by_name('default')
-        elif legacy == 'nocolor':
-            return _NoStyle
-        else:
-            raise ValueError('Got unknown colors: ', legacy)
-    else:
-        if isinstance(name_or_cls, str):
-            return get_style_by_name(name_or_cls)
-        else:
-            return name_or_cls
+    pass
 
 
 def install():
-    ipy = get_ipython()  # noqa
-
-    columns = get_terminal_width()
-
     class IPythonCompatPrinter:
         def __init__(self, stream, *args, **kwargs):
-            self.stream = stream
-
+            pass
         def pretty(self, obj):
             pass
-
         def flush(self):
             pass
-
-    IPython.lib.pretty.RepresentationPrinter = IPythonCompatPrinter
+    pass

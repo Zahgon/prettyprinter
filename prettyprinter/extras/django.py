@@ -36,27 +36,22 @@ class dec(object):
     __slots__ = ('value', )
 
     def __init__(self, value):
-        self.value = value
+        pass
 
     def __lt__(self, other):
-        assert isinstance(other, dec)
-        return self.value > other.value
+        pass
 
     def __gt__(self, other):
-        assert isinstance(other, dec)
-        return self.value < other.value
+        pass
 
     def __eq__(self, other):
-        assert isinstance(other, dec)
-        return self.value == other.value
+        pass
 
     def __le__(self, other):
-        assert isinstance(other, dec)
-        return self.value >= other.value
+        pass
 
     def __ge__(self, other):
-        assert isinstance(other, dec)
-        return self.value <= other.value
+        pass
 
     __hash__ = None
 
@@ -74,5 +69,4 @@ def pretty_queryset(queryset, ctx):
 
 
 def install():
-    register_pretty(Model)(pretty_base_model)
-    register_pretty(QuerySet)(pretty_queryset)
+    pass

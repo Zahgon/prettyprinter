@@ -149,45 +149,11 @@ default_style = default_light_style if is_light_bg else default_dark_style
 
 
 def set_default_style(style):
-    """Sets default global style to be used by ``prettyprinter.cpprint``.
-
-    :param style: the style to set, either subclass of
-                  ``pygments.styles.Style`` or one of ``'dark'``, ``'light'``
-    """
-    global default_style
-    if style == 'dark':
-        style = default_dark_style
-    elif style == 'light':
-        style = default_light_style
-
-    if not issubclass(style, Style):
-        raise TypeError(
-            "style must be a subclass of pygments.styles.Style or "
-            "one of 'dark', 'light'. Got {}".format(repr(style))
-        )
-    default_style = style
+    pass
 
 
 def styleattrs_to_colorful(attrs):
-    c = colorful.reset
-    if attrs['color'] or attrs['bgcolor']:
-        # Colorful doesn't have a way to directly set Hex/RGB
-        # colors- until I find a better way, we do it like this :)
-        accessor = ''
-        if attrs['color']:
-            colorful.update_palette({'prettyprinterCurrFg': attrs['color']})
-            accessor = 'prettyprinterCurrFg'
-        if attrs['bgcolor']:
-            colorful.update_palette({'prettyprinterCurrBg': attrs['bgcolor']})
-            accessor += '_on_prettyprinterCurrBg'
-        c &= getattr(colorful, accessor)
-    if attrs['bold']:
-        c &= colorful.bold
-    if attrs['italic']:
-        c &= colorful.italic
-    if attrs['underline']:
-        c &= colorful.underline
-    return c
+    pass
 
 
 def colored_render_to_stream(
@@ -197,64 +163,4 @@ def colored_render_to_stream(
     newline='\n',
     separator=' '
 ):
-    if style is None:
-        style = default_style
-
-    evald = list(sdocs)
-
-    if not evald:
-        return
-
-    color_cache = {}
-
-    colorstack = []
-
-    sdoc_lines = as_lines(evald)
-
-    for sdoc_line in sdoc_lines:
-        last_text_sdoc_idx = rfind_idx(
-            lambda sdoc: isinstance(sdoc, str),
-            sdoc_line
-        )
-
-        # Edge case: trailing whitespace on a line.
-        # Currently happens on multiline str value in a dict:
-        # there's a trailing whitespace after the colon that's
-        # hard to eliminate at the doc level.
-        if last_text_sdoc_idx != -1:
-            last_text_sdoc = sdoc_line[last_text_sdoc_idx]
-            sdoc_line[last_text_sdoc_idx] = last_text_sdoc.rstrip()
-
-        for sdoc in sdoc_line:
-            if isinstance(sdoc, str):
-                stream.write(sdoc)
-            elif isinstance(sdoc, SLine):
-                stream.write(newline + separator * sdoc.indent)
-            elif isinstance(sdoc, SAnnotationPush):
-                if isinstance(sdoc.value, Token):
-                    try:
-                        color = color_cache[sdoc.value]
-                    except KeyError:
-                        pygments_token = _SYNTAX_TOKEN_TO_PYGMENTS_TOKEN[
-                            sdoc.value
-                        ]
-                        tokenattrs = style.style_for_token(pygments_token)
-                        color = styleattrs_to_colorful(tokenattrs)
-                        color_cache[sdoc.value] = color
-
-                    colorstack.append(color)
-                    stream.write(str(color))
-
-            elif isinstance(sdoc, SAnnotationPop):
-                try:
-                    colorstack.pop()
-                except IndexError:
-                    continue
-
-                if colorstack:
-                    stream.write(str(colorstack[-1]))
-                else:
-                    stream.write(str(colorful.reset))
-
-    if colorstack:
-        stream.write(str(colorful.reset))
+    pass

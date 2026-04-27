@@ -83,7 +83,7 @@ def _merge_defaults(
 
 def get_default_config():
     """Returns a read-only view of the current configuration"""
-    pass
+    return MappingProxyType(_default_config)
 
 
 class PrettyPrinter:

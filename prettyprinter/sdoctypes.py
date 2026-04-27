@@ -7,28 +7,27 @@ class SLine(SDoc):
     __slots__ = ('indent', )
 
     def __init__(self, indent):
-        assert isinstance(indent, int)
-        self.indent = indent
+        pass
 
     def __repr__(self):
-        return 'SLine({})'.format(repr(self.indent))
+        pass
 
 
 class SAnnotationPush(SDoc):
     __slots__ = ('value', )
 
     def __init__(self, value):
-        self.value = value
+        pass
 
     def __repr__(self):
-        return 'SAnnotationPush({})'.format(repr(self.value))
+        pass
 
 
 class SAnnotationPop(SDoc):
     __slots__ = ('value', )
 
     def __init__(self, value):
-        self.value = value
+        pass
 
     def __repr__(self):
-        return 'SAnnotationPush({})'.format(repr(self.value))
+        pass

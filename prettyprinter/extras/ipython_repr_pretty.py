@@ -30,24 +30,17 @@ class NoopStream:
 
 class CompatRepresentationPrinter(OriginalRepresentationPrinter):
     def __init__(self, *args, **kwargs):
-        self._prettyprinter_ctx = kwargs.pop('prettyprinter_ctx')
-        super().__init__(*args, **kwargs)
-
-        # self.output should be assigned by the superclass
-        assert isinstance(self.output, NoopStream)
-
-        self._pending_wrapper = identity
-        self._docparts = []
+        pass
 
     def text(self, obj):
-        super().text(obj)
-
-        self._docparts.append(obj)
+        pass
 
     def breakable(self, sep=' '):
         pass
 
     def begin_group(self, indent=0, open=''):
+        def wrapper(doc):
+            pass
         pass
 
     def end_group(self, dedent=0, close=''):
@@ -55,7 +48,6 @@ class CompatRepresentationPrinter(OriginalRepresentationPrinter):
 
     @contextmanager
     def indent(self, indent):
-        """with statement support for indenting/dedenting."""
         pass
 
     def pretty(self, obj):
@@ -63,6 +55,10 @@ class CompatRepresentationPrinter(OriginalRepresentationPrinter):
 
 
 def wrap_repr_pretty(fn):
+    def wrapped(value, ctx):
+        def evaluator(indent, column, page_width, ribbon_width):
+            pass
+        pass
     pass
 
 
@@ -71,4 +67,4 @@ def pretty_repr_pretty(value, ctx):
 
 
 def install():
-    register_pretty(predicate=implements_repr_pretty)(pretty_repr_pretty)
+    pass

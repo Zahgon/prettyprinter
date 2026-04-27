@@ -11,4 +11,4 @@ def pretty_attrs(value, ctx):
 
 
 def install():
-    register_pretty(predicate=is_instance_of_attrs_class)(pretty_attrs)
+    pass

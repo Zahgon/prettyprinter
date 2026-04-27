@@ -3,63 +3,30 @@ import shutil
 
 
 def intersperse(x, ys):
-    """
-    Returns an iterable where ``x`` is inserted between
-    each element of ``ys``
-
-    :type ys: Iterable
-    """
-    it = iter(ys)
-
-    try:
-        y = next(it)
-    except StopIteration:
-        return
-
-    yield y
-
-    for y in it:
-        yield x
-        yield y
+    pass
 
 
 def find(predicate, iterable, default=None):
-    filtered = iter((x for x in iterable if predicate(x)))
-    return next(filtered, default)
+    pass
 
 
 def rfind_idx(predicate, seq):
-    length = len(seq)
-    for i, el in enumerate(reversed(seq)):
-        if predicate(el):
-            return length - i - 1
-    return -1
+    pass
 
 
 def identity(x):
-    return x
+    pass
 
 
 def get_terminal_width(default=79):
-    return shutil.get_terminal_size((default, None)).columns
+    pass
 
 
 def take(n, iterable):
-    return islice(iterable, n)
+    pass
 
 
 def compose(f, g):
-    if f is identity:
-        return g
-    if g is identity:
-        return f
-
     def composed(x):
         pass
-
-    composed.__name__ = 'composed_{}_then_{}'.format(
-        g.__name__,
-        f.__name__
-    )
-
-    return composed
+    pass
